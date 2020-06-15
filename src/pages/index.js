@@ -1,54 +1,69 @@
-import React from 'react';
-import { Link, graphql } from 'gatsby';
-import Masonry from 'react-masonry-component';
-import Img from 'gatsby-image';
-import Layout from '../components/layout';
-import VideoListComponent from '../components/video-list/video-list.component';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import Note from '../components/note';
+import Form from '../components/form';
+import './index.css';
+import IdentityModal, { useIdentityContext } from "react-netlify-identity-widget"
+import "react-netlify-identity-widget/styles.css"
 
-const IndexPage = ({ data }) => (
-	<Layout>
-		<h1>Videos</h1>
-		<VideoListComponent />
-		{/* <Masonry className='showcase'>
-			{data.allDatoCmsWork.edges.map(({ node: work }) => (
-				<div key={work.id} className='showcase__item'>
-					<figure className='card'>
-						<Link to={`/works/${work.slug}`} className='card__image'>
-							<Img fluid={work.coverImage.fluid} />
-						</Link>
-						<figcaption className='card__caption'>
-							<h6 className='card__title'>
-								<Link to={`/works/${work.slug}`}>{work.title}</Link>
-							</h6>
-							<div className='card__description'>
-								<p>{work.excerpt}</p>
-							</div>
-						</figcaption>
-					</figure>
-				</div>
-			))}
-		</Masonry> */}
-	</Layout>
-);
+export default () => {
+  const [status, setStatus] = useState("loading");
+  const [notes, setNotes] = useState(null);
+  useEffect(() => {
+    let canceled = false;
+    if (status != "loading") return;
+    axios("/api/get-all-notes").then(result => {
+      if (canceled === true) return;
+      
+      if (result.status != 200) {
+        console.error("Error loading notes");
+        console.error(result);
+        return;
+      }
+      setNotes(result.data.notes);
+      setStatus("loaded");
+    });
 
-export default IndexPage;
+    return () => {
+      canceled = true;
+    };
+  }, [status]);
 
-export const query = graphql`
-	query IndexQuery {
-		allDatoCmsWork(sort: { fields: [position], order: ASC }) {
-			edges {
-				node {
-					id
-					title
-					slug
-					excerpt
-					coverImage {
-						fluid(maxWidth: 450, imgixParams: { fm: "jpg", auto: "compress" }) {
-							...GatsbyDatoCmsSizes
-						}
-					}
-				}
-			}
-		}
-	}
-`;
+  const reloadNotes = () => setStatus('loading');
+  
+  const identity = useIdentityContext()
+  const [dialog, setDialog] = React.useState(false)
+  const name =
+    (identity && identity.user && identity.user.user_metadata && identity.user.user_metadata.full_name) || "NoName"
+  const isLoggedIn = identity && identity.isLoggedIn
+
+  return (
+      <main>
+        <h1>The Writing Pad</h1>
+        {identity && identity.isLoggedIn ? (
+          <>
+            <button className="login-btn" onClick={() => setDialog(true)}>
+              {isLoggedIn ? `Hello ${name}, Log out here!` : "LOG IN"}
+            </button>
+            <Form reloadNotes={reloadNotes}/>
+              {notes ? (
+                <ul>
+                  {notes.map(note => (
+                    <li key={note._id}>
+                      <Note note={note} reloadNotes={reloadNotes}/>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Loading notes...</p>
+              )}
+          </>
+        ) : (
+          <button className="login-btn" onClick={() => setDialog(true)}>
+            {isLoggedIn ? `Hello ${name}, Log out here!` : "LOG IN"}
+          </button>
+        )}
+        <IdentityModal showDialog={dialog} onCloseDialog={() => setDialog(false)} />
+      </main>
+  );
+};

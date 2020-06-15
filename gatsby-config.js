@@ -1,18 +1,11 @@
-require('dotenv').config()
-
 module.exports = {
-  siteMetadata: {
-    title: `Creative Portfolio`,
-  },
   plugins: [
-    `gatsby-plugin-react-helmet`,
-    `gatsby-plugin-sass`,
-    `gatsby-transformer-remark`,
+    // You can should only have one instance of this plugin
     {
-      resolve: `gatsby-source-datocms`,
+      resolve: `gatsby-plugin-netlify-identity`,
       options: {
-        apiToken: process.env.DATO_API_TOKEN,
-      },
-    },
-  ],
+        url: `https://writingpad.netlify.com/` // required!
+      }
+    }
+  ]
 }
