@@ -13,7 +13,8 @@ const CREATE_NOTE = `
 exports.handler = async (event, context, callback) => {
 	const { identity, user } = context.clientContext;
 	const { text } = JSON.parse(event.body);
-	console.log(context);
+	console.log(identity);
+	console.log(user);
 	if (!identity) throw new Error('Not Authorized');
 	const userID = (identity && identity.user && identity.user.id) || 'none';
 	const { data, errors } = await sendQuery(CREATE_NOTE, { text, userID });
