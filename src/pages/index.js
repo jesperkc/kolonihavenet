@@ -35,7 +35,6 @@ export default () => {
 	const [dialog, setDialog] = React.useState(false);
 	const name = (identity && identity.user && identity.user.user_metadata && identity.user.user_metadata.full_name) || 'NoName';
 	const isLoggedIn = identity && identity.isLoggedIn;
-	console.log(identity.user.id);
 	return (
 		<main>
 			<h1>The Writing Pad</h1>
